@@ -17,8 +17,14 @@ function addDeposit() {
         <label for="rate${depositCount}">Процентная ставка (% годовых):</label>
         <input type="number" id="rate${depositCount}" name="rate${depositCount}" step="0.01" required>
 
-        <label for="term${depositCount}">Срок вклада (в месяцах):</label>
+        <label for="term${depositCount}">Срок вклада:</label>
         <input type="number" id="term${depositCount}" name="term${depositCount}" required>
+
+        <label for="termType${depositCount}">Единица измерения срока:</label>
+        <select id="termType${depositCount}" name="termType${depositCount}">
+            <option value="months">Месяцы</option>
+            <option value="days">Дни</option>
+        </select>
 
         <label for="capitalization${depositCount}">Период капитализации:</label>
         <select id="capitalization${depositCount}" name="capitalization${depositCount}">
@@ -46,13 +52,21 @@ function calculate() {
     let totalIncome = 0;
     let totalTax = 0;
 
+    const keyRate = parseFloat(document.getElementById('keyRate').value) / 100;
+
+    if (isNaN(keyRate) || keyRate <= 0) {
+        alert('Пожалуйста, введите корректное значение максимальной ключевой ставки.');
+        return;
+    }
+
     for (let i = 1; i <= depositCount; i++) {
         const amountElement = document.getElementById(`amount${i}`);
         if (!amountElement) continue; // Если вклад был удален
 
         const amount = parseFloat(amountElement.value);
         const rate = parseFloat(document.getElementById(`rate${i}`).value);
-        const term = parseInt(document.getElementById(`term${i}`).value);
+        const term = parseFloat(document.getElementById(`term${i}`).value);
+        const termType = document.getElementById(`termType${i}`).value;
         const capitalization = document.getElementById(`capitalization${i}`).value;
 
         // Проверка корректности введенных данных
@@ -66,33 +80,40 @@ function calculate() {
             return;
         }
 
+        // Преобразование срока вклада в дни
+        let termInDays;
+        if (termType === 'months') {
+            termInDays = term * 30; // Приблизительно
+        } else if (termType === 'days') {
+            termInDays = term;
+        }
+
         // Расчет дохода по вкладу с учетом капитализации
         let income = 0;
         const annualRate = rate / 100;
 
         if (capitalization === 'none') {
             // Без капитализации
-            income = amount * annualRate * (term / 12);
+            const termInYears = termInDays / 365;
+            income = amount * annualRate * termInYears;
         } else if (capitalization === 'monthly') {
-            // Ежемесячная капитализация
-            const periods = term;
+            const periods = (termType === 'months') ? term : term / 30;
             const monthlyRate = annualRate / 12;
             income = amount * (Math.pow(1 + monthlyRate, periods) - 1);
         } else if (capitalization === 'daily') {
-            // Ежедневная капитализация
             const daysInYear = 365;
-            const days = term * 30; // Приблизительное количество дней
             const dailyRate = annualRate / daysInYear;
-            income = amount * (Math.pow(1 + dailyRate, days) - 1);
+            income = amount * (Math.pow(1 + dailyRate, termInDays) - 1);
         }
 
         income = parseFloat(income.toFixed(2));
         totalIncome += income;
 
         // Расчет суммы налога
-        const taxFreeRate = 0.01; // Не облагаемый налогом процент (ставка ЦБ)
         const taxRate = 13 / 100; // Ставка налога 13%
-        const taxBase = Math.max(income - amount * (taxFreeRate * term / 12), 0);
+        const termInYears = termInDays / 365;
+        const nonTaxableIncome = amount * keyRate * termInYears;
+        const taxBase = Math.max(income - nonTaxableIncome, 0);
         const taxAmount = taxBase * taxRate;
         totalTax += taxAmount;
     }
@@ -106,41 +127,3 @@ function calculate() {
 
     document.getElementById('result').style.display = 'block';
 }
-let depositCount = 0;
-let inflationData = [];
-
-function loadInflationData() {
-    // Ваш код для загрузки данных об инфляции, если это необходимо
-}
-
-function getKeyRate() {
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const url = 'https://www.cbr.ru/scripts/xml_key.asp';
-
-    fetch(proxyUrl + url)
-        .then(response => response.text())
-        .then(data => {
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(data, 'text/xml');
-
-            const keyRateNodes = xmlDoc.getElementsByTagName('KeyRate');
-            const lastKeyRateNode = keyRateNodes[keyRateNodes.length - 1];
-
-            const keyRateValue = lastKeyRateNode.getAttribute('CurRate');
-            const keyRate = parseFloat(keyRateValue.replace(',', '.'));
-
-            document.getElementById('keyRate').value = keyRate;
-        })
-        .catch(error => {
-            console.error('Ошибка при получении ключевой ставки:', error);
-            alert('Не удалось получить ключевую ставку. Пожалуйста, введите ее вручную.');
-            document.getElementById('keyRate').removeAttribute('readonly');
-        });
-}
-
-window.onload = function() {
-    loadInflationData();
-    getKeyRate();
-};
-
-// Ваши функции addDeposit, removeDeposit и calculate остаются без изменений или с вашими предыдущими дополнениями
