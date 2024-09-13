@@ -8,8 +8,8 @@
 <body>
     <h1>Калькулятор дохода по вкладам</h1>
     <form id="depositForm">
-        <label for="keyRate">Ключевая ставка ЦБ РФ (%):</label>
-        <input type="number" id="keyRate" name="keyRate" step="0.01" required readonly>
+        <label for="keyRate">Введите максимальную ключевую ставку за год (%):</label>
+        <input type="number" id="keyRate" name="keyRate" step="0.01" required>
 
         <div id="depositsContainer">
             <!-- Здесь будут добавляться поля для вкладов -->
@@ -22,7 +22,6 @@
         <h2>Результаты расчета</h2>
         <p>Общий доход: <span id="totalIncome">0</span> руб.</p>
         <p>Сумма налога: <span id="taxAmount">0</span> руб.</p>
-        <p>Реальный доход с учетом инфляции и налога: <span id="realIncome">0</span> руб.</p>
     </div>
 
     <script src="script.js"></script>
