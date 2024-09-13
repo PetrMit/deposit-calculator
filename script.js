@@ -1,5 +1,10 @@
 let depositCount = 0;
 
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addDepositBtn').addEventListener('click', addDeposit);
+    document.getElementById('calculateBtn').addEventListener('click', calculate);
+});
+
 function addDeposit() {
     depositCount++;
 
@@ -33,16 +38,23 @@ function addDeposit() {
             <option value="daily">Ежедневно</option>
         </select>
 
-        <button type="button" onclick="removeDeposit(${depositCount})">Удалить вклад</button>
+        <button type="button" class="removeDepositBtn" data-id="${depositCount}">Удалить вклад</button>
         <hr>
     `;
 
     depositsContainer.appendChild(depositDiv);
+
+    // Добавляем обработчик события для кнопки удаления вклада
+    depositDiv.querySelector('.removeDepositBtn').addEventListener('click', function() {
+        removeDeposit(this.getAttribute('data-id'));
+    });
 }
 
 function removeDeposit(id) {
     const depositDiv = document.getElementById(`deposit${id}`);
-    depositDiv.parentNode.removeChild(depositDiv);
+    if (depositDiv) {
+        depositDiv.parentNode.removeChild(depositDiv);
+    }
 }
 
 function calculate() {
@@ -66,8 +78,10 @@ function calculate() {
         const amount = parseFloat(amountElement.value);
         const rate = parseFloat(document.getElementById(`rate${i}`).value);
         const term = parseFloat(document.getElementById(`term${i}`).value);
-        const termType = document.getElementById(`termType${i}`).value;
-        const capitalization = document.getElementById(`capitalization${i}`).value;
+        const termTypeElement = document.getElementById(`termType${i}`);
+        const termType = termTypeElement ? termTypeElement.value : 'months';
+        const capitalizationElement = document.getElementById(`capitalization${i}`);
+        const capitalization = capitalizationElement ? capitalizationElement.value : 'none';
 
         // Проверка корректности введенных данных
         if (isNaN(amount) || isNaN(rate) || isNaN(term)) {
@@ -86,6 +100,8 @@ function calculate() {
             termInDays = term * 30; // Приблизительно
         } else if (termType === 'days') {
             termInDays = term;
+        } else {
+            termInDays = term * 30; // По умолчанию месяцы
         }
 
         // Расчет дохода по вкладу с учетом капитализации
