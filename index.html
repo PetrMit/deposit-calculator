@@ -8,19 +8,14 @@
 <body>
     <h1>Калькулятор дохода по вкладам</h1>
     <form id="depositForm">
-        <label for="amount">Сумма вклада (руб):</label>
-        <input type="number" id="amount" name="amount" required>
-
-        <label for="rate">Процентная ставка (% годовых):</label>
-        <input type="number" id="rate" name="rate" step="0.01" required>
-
-        <label for="term">Срок вклада (в месяцах):</label>
-        <input type="number" id="term" name="term" required>
-
+        <div id="depositsContainer">
+            <!-- Здесь будут добавляться поля для вкладов -->
+        </div>
+        <button type="button" onclick="addDeposit()">Добавить вклад</button>
         <button type="button" onclick="calculate()">Рассчитать</button>
     </form>
 
-    <div id="result">
+    <div id="result" style="display:none;">
         <h2>Результаты расчета</h2>
         <p>Общий доход: <span id="totalIncome">0</span> руб.</p>
         <p>Сумма налога: <span id="taxAmount">0</span> руб.</p>
