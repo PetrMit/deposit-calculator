@@ -106,3 +106,41 @@ function calculate() {
 
     document.getElementById('result').style.display = 'block';
 }
+let depositCount = 0;
+let inflationData = [];
+
+function loadInflationData() {
+    // Ваш код для загрузки данных об инфляции, если это необходимо
+}
+
+function getKeyRate() {
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const url = 'https://www.cbr.ru/scripts/xml_key.asp';
+
+    fetch(proxyUrl + url)
+        .then(response => response.text())
+        .then(data => {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(data, 'text/xml');
+
+            const keyRateNodes = xmlDoc.getElementsByTagName('KeyRate');
+            const lastKeyRateNode = keyRateNodes[keyRateNodes.length - 1];
+
+            const keyRateValue = lastKeyRateNode.getAttribute('CurRate');
+            const keyRate = parseFloat(keyRateValue.replace(',', '.'));
+
+            document.getElementById('keyRate').value = keyRate;
+        })
+        .catch(error => {
+            console.error('Ошибка при получении ключевой ставки:', error);
+            alert('Не удалось получить ключевую ставку. Пожалуйста, введите ее вручную.');
+            document.getElementById('keyRate').removeAttribute('readonly');
+        });
+}
+
+window.onload = function() {
+    loadInflationData();
+    getKeyRate();
+};
+
+// Ваши функции addDeposit, removeDeposit и calculate остаются без изменений или с вашими предыдущими дополнениями
