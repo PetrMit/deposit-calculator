@@ -22,14 +22,11 @@ function addDeposit() {
         <label for="rate${depositCount}">Процентная ставка (% годовых):</label>
         <input type="number" id="rate${depositCount}" name="rate${depositCount}" step="0.01" required>
 
-        <label for="term${depositCount}">Срок вклада:</label>
-        <input type="number" id="term${depositCount}" name="term${depositCount}" required>
+        <label for="startDate${depositCount}">Дата начала вклада:</label>
+        <input type="date" id="startDate${depositCount}" name="startDate${depositCount}" required>
 
-        <label for="termType${depositCount}">Единица измерения срока:</label>
-        <select id="termType${depositCount}" name="termType${depositCount}">
-            <option value="months">Месяцы</option>
-            <option value="days">Дни</option>
-        </select>
+        <label for="endDate${depositCount}">Дата окончания вклада:</label>
+        <input type="date" id="endDate${depositCount}" name="endDate${depositCount}" required>
 
         <label for="capitalization${depositCount}">Период капитализации:</label>
         <select id="capitalization${depositCount}" name="capitalization${depositCount}">
@@ -76,32 +73,32 @@ function calculate() {
 
         const amount = parseFloat(amountElement.value);
         const rate = parseFloat(document.getElementById(`rate${i}`).value);
-        const term = parseFloat(document.getElementById(`term${i}`).value);
-        const termTypeElement = document.getElementById(`termType${i}`);
-        const termType = termTypeElement ? termTypeElement.value : 'months';
+        const startDateValue = document.getElementById(`startDate${i}`).value;
+        const endDateValue = document.getElementById(`endDate${i}`).value;
         const capitalizationElement = document.getElementById(`capitalization${i}`);
         const capitalization = capitalizationElement ? capitalizationElement.value : 'none';
 
         // Проверка корректности введенных данных
-        if (isNaN(amount) || isNaN(rate) || isNaN(term)) {
+        if (isNaN(amount) || isNaN(rate) || !startDateValue || !endDateValue) {
             alert(`Пожалуйста, заполните все поля для вклада ${i} корректными значениями.`);
             return;
         }
 
-        if (amount <= 0 || rate <= 0 || term <= 0) {
-            alert(`Все значения для вклада ${i} должны быть положительными числами.`);
+        if (amount <= 0 || rate <= 0) {
+            alert(`Сумма и процентная ставка для вклада ${i} должны быть положительными числами.`);
             return;
         }
 
-        // Преобразование срока вклада в дни
-        let termInDays;
-        if (termType === 'months') {
-            termInDays = term * 30; // Приблизительно
-        } else if (termType === 'days') {
-            termInDays = term;
-        } else {
-            termInDays = term * 30; // По умолчанию месяцы
+        const startDate = new Date(startDateValue);
+        const endDate = new Date(endDateValue);
+
+        if (endDate <= startDate) {
+            alert(`Дата окончания вклада ${i} должна быть позже даты начала.`);
+            return;
         }
+
+        // Расчет срока вклада в днях
+        const termInDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
 
         // Расчет дохода по вкладу с учетом капитализации
         let income = 0;
@@ -112,12 +109,31 @@ function calculate() {
             const termInYears = termInDays / 365;
             income = amount * annualRate * termInYears;
         } else if (capitalization === 'monthly') {
-            const periods = termInDays / 30; // Количество месяцев
+            // Расчет количества полных месяцев и оставшихся дней
+            const monthsDifference = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+            const dayDifference = endDate.getDate() - startDate.getDate();
+
+            let fullMonths = monthsDifference;
+            let remainingDays = dayDifference;
+
+            if (dayDifference < 0) {
+                fullMonths -= 1;
+                const previousMonth = new Date(endDate.getFullYear(), endDate.getMonth(), 0);
+                remainingDays = previousMonth.getDate() - startDate.getDate() + endDate.getDate();
+            }
+
+            // Доход за полные месяцы с капитализацией
             const monthlyRate = annualRate / 12;
-            income = amount * (Math.pow(1 + monthlyRate, periods) - 1);
+            const amountAfterMonths = amount * Math.pow(1 + monthlyRate, fullMonths);
+
+            // Доход за оставшиеся дни по простой процентной ставке
+            const dailyRate = annualRate / 365;
+            const incomeForRemainingDays = amountAfterMonths * dailyRate * remainingDays;
+
+            income = (amountAfterMonths - amount) + incomeForRemainingDays;
         } else if (capitalization === 'daily') {
-            const daysInYear = 365;
-            const dailyRate = annualRate / daysInYear;
+            // Ежедневная капитализация
+            const dailyRate = annualRate / 365;
             income = amount * (Math.pow(1 + dailyRate, termInDays) - 1);
         }
 
