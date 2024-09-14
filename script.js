@@ -62,9 +62,8 @@ function calculate() {
     const taxAmountElement = document.getElementById('taxAmount');
 
     let totalIncome = 0;
-    let totalTax = 0;
 
-    const keyRate = parseFloat(document.getElementById('keyRate').value) / 100;
+    const keyRate = parseFloat(document.getElementById('keyRate').value);
 
     if (isNaN(keyRate) || keyRate <= 0) {
         alert('Пожалуйста, введите корректное значение максимальной ключевой ставки.');
@@ -113,7 +112,7 @@ function calculate() {
             const termInYears = termInDays / 365;
             income = amount * annualRate * termInYears;
         } else if (capitalization === 'monthly') {
-            const periods = (termType === 'months') ? term : term / 30;
+            const periods = termInDays / 30; // Количество месяцев
             const monthlyRate = annualRate / 12;
             income = amount * (Math.pow(1 + monthlyRate, periods) - 1);
         } else if (capitalization === 'daily') {
@@ -124,18 +123,15 @@ function calculate() {
 
         income = parseFloat(income.toFixed(2));
         totalIncome += income;
-
-        // Расчет суммы налога
-        const taxRate = 13 / 100; // Ставка налога 13%
-        const termInYears = termInDays / 365;
-        const nonTaxableIncome = amount * keyRate * termInYears;
-        const taxBase = Math.max(income - nonTaxableIncome, 0);
-        const taxAmount = taxBase * taxRate;
-        totalTax += taxAmount;
     }
 
-    totalIncome = totalIncome.toFixed(2);
-    totalTax = totalTax.toFixed(2);
+    totalIncome = parseFloat(totalIncome.toFixed(2));
+
+    // Расчет суммы налога
+    const nonTaxableAmount = 1000000 * (keyRate / 100);
+    const taxBase = Math.max(totalIncome - nonTaxableAmount, 0);
+    const taxRate = 13 / 100; // Ставка налога 13%
+    const totalTax = parseFloat((taxBase * taxRate).toFixed(2));
 
     // Вывод результатов
     totalIncomeElement.innerText = totalIncome;
